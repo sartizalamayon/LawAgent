@@ -2,12 +2,5 @@ fastapi
 uvicorn
 langchain
 langgraph
-qdrant-client
-python-dotenv
-sentence-transformers
-PyMuPDF
-pytesseract
-pillow
 pydantic
 websockets
-openai
