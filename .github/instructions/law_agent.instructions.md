@@ -8,8 +8,7 @@ These are global coding standards, architectural decisions, and preferences to f
 
 ## 🧠 Project Overview
 
-You are working on a bilingual, agent-based legal assistant designed to help users (primarily in Bangladesh) with queries using a chat interface. It leverages 200+ law books, documents, and scraped data sources stored in a vector database. Users can query the system in Bangla or English through various inputs (text, images, PDFs, voice). The system uses LangGraph + LangChain with FastAPI to create a multi-tool, memory-aware, long-running agent. We will build the fronend UI in React Native later. For now we focus on the backend API and agent orchestration.
-
+You are working on a bilingual, agent-based legal assistant designed to help users (primarily in Bangladesh) with queries using a chat interface. It leverages 200+ law books, documents, and scraped data sources stored in a vector database. Users can query the system in Bangla or English through various inputs (text, images, PDFs). The system uses LangGraph + LangChain with FastAPI to create a multi-tool, memory-aware, long-running agent. We will build the fronend UI in React Native later. For now we focus on the backend API and agent orchestration.
 ---
 
 ## ⚙️ Tech Stack
@@ -17,13 +16,10 @@ You are working on a bilingual, agent-based legal assistant designed to help use
 - FastAPI (Backend API + WebSocket interface)
 - LangGraph (Agentic orchestration with tool-calling)
 - LangChain (Tool definition, embedding, prompt management)
-- Groq API with LLaMA3 (LLM inference)
-- Qdrant (VectorDB, bilingual embedding store, similarity search)
-- PyMuPDF / pdfplumber / or best for books(PDF parsing)
-- pytesseract + PIL (image parsing)
+- Groq API 
+- Qdrant could version (VectorDB, bilingual embedding store, similarity search)
 - sentence-transformers (bilingual embedding model, use huggingface api)
 - WebSockets (real-time agent feedback)
-- React Native (for final UI, not in scope yet)
 
 ---
 
@@ -71,17 +67,7 @@ See the diagram in assets/autodraw-pipeline.png for a high-level view. In brief:
    - WebSocket (ws://host/agent) streams back step-wise updates.
    - Each tool invocation, thought, and final result is streamed.
 
-
 ---
 
-## 🗃️ Components to Be Implemented (Incrementally)
-
-- [ ] Core Agent using LangGraph
-- [ ] Tooling layer (web search, translation, law ref checker, etc.)
-- [ ] Qdrant ingestion pipeline
-- [ ] All parsers (PDF, Image,, Text)
-- [ ] FastAPI endpoints (chat, ingestion, etc.)
-- [ ] WebSocket interface
-- [ ] Test seeds for embedding, chunking, etc.
-
-
+# A production ready fastapi-langraph streaming templete.
+https://github.com/wassim249/fastapi-langgraph-agent-production-ready-template

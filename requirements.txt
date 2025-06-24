@@ -4,3 +4,11 @@ langchain
 langgraph
 pydantic
 websockets
+PyPDF2
+pymupdf4llm
+tqdm
+langchain-text-splitters
+sentence-transformers
+transformers
+qdrant-client
+python-dotenv

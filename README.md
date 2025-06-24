@@ -1,3 +1,3 @@
 # LawAgent
 
-A bilingual, agent-based legal assistant.
+A bilingual, agent-based legal assistant for Bangladeshi law.
