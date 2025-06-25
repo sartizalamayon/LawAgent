@@ -13,19 +13,13 @@ class QdrantClientWrapper:
             url=os.environ.get("QDRANT_URL"),
             api_key=os.environ.get("QDRANT_API_KEY"),
         )
-        self._ensure_collection()
+        self._check_collection_exists()
 
-    def _ensure_collection(self):
-        # Create collection if it doesn't exist
+    def _check_collection_exists(self):
+        # Only connect if collection exists, else raise error
         collections = self.client.get_collections().collections
         if self.collection_name not in [c.name for c in collections]:
-            self.client.create_collection(
-                collection_name=self.collection_name,
-                vectors_config=qmodels.VectorParams(
-                    size=768,  # embedding dim for multilingual-e5-base
-                    distance=qmodels.Distance.COSINE,
-                ),
-            )
+            raise RuntimeError(f"Qdrant collection '{self.collection_name}' does not exist. Please create it in the Qdrant UI or CLI.")
 
     def upsert_chunks(self, embeddings: List[List[float]], metadatas: List[Dict], batch_size: int = 64):
         assert len(embeddings) == len(metadatas)
