@@ -5,6 +5,7 @@ from app.parser.pdf_parser import PDFParser
 from app.parser.chunking import TextChunker
 from app.embeddings.embedding_model import EmbeddingModel
 from app.vectorstore.qdrant_client import QdrantClientWrapper
+import tqdm
 
 BOOKS_DIR = os.path.join(os.path.dirname(__file__), '..', 'Books')
 INDEX_PATH = os.path.join(os.path.dirname(__file__), 'rag_books.json')
@@ -21,6 +22,17 @@ def save_index(index):
     with open(INDEX_PATH, 'w') as f:
         json.dump(index, f, indent=2)
 
+def process_pdf(pdf_path, chunker):
+    """Process a single PDF file"""
+    try:
+        parser = PDFParser(pdf_path)
+        pages = parser.parse()
+        chunks = chunker.chunk(pages)
+        return pdf_path, pages, chunks
+    except Exception as e:
+        print(f"Error processing {pdf_path}: {e}")
+        return None
+
 def main():
     index = load_index()
     pdf_files = glob(os.path.join(BOOKS_DIR, '*.pdf'))
@@ -34,22 +46,44 @@ def main():
     embedder = EmbeddingModel()
     qdrant = QdrantClientWrapper(COLLECTION_NAME)
 
-    for pdf_path in new_files:
-        print(f'Processing: {pdf_path}')
-        parser = PDFParser(pdf_path)
-        pages = parser.parse()
-        chunks = chunker.chunk(pages)
+    # Process one book at a time
+    for pdf_path in tqdm.tqdm(new_files, desc="Processing books"):
+        print(f"\nProcessing: {os.path.basename(pdf_path)}")
+        
+        # Parse and chunk the PDF
+        result = process_pdf(pdf_path, chunker)
+        if result is None:
+            print(f"Skipping {os.path.basename(pdf_path)} due to processing error")
+            continue
+            
+        pdf_path, pages, chunks = result
+        
+        # Prepare texts and metadata
         texts = [c["chunk_text"] for c in chunks]
-        metadatas = [{{k: v for k, v in c.items() if k != "chunk_text"}} for c in chunks]
-        embeddings = embedder.embed_texts(texts)
-        qdrant.upsert_chunks(embeddings, metadatas)
-        # Update index
-        index[os.path.basename(pdf_path)] = {
-            "pages": len(pages),
-            "chunks": len(chunks)
-        }
-        save_index(index)
-        print(f'Ingested {os.path.basename(pdf_path)}')
+        metadatas = []
+        for c in chunks:
+            meta = {k: v for k, v in c.items() if k != "chunk_text"}
+            text = c["chunk_text"]
+            meta["chunk_text"] = text
+            meta["page_content"] = text
+            metadatas.append(meta)
+        
+        # Embed and store
+        try:
+            embeddings = embedder.embed_texts(texts)
+            qdrant.upsert_chunks(embeddings, metadatas)
+            
+            # Update index
+            index[os.path.basename(pdf_path)] = {
+                "pages": len(pages),
+                "chunks": len(chunks)
+            }
+            save_index(index)
+            print(f'Successfully ingested {os.path.basename(pdf_path)} ({len(chunks)} chunks)')
+            
+        except Exception as e:
+            print(f"Error embedding/storing {os.path.basename(pdf_path)}: {e}")
+            continue
 
 if __name__ == '__main__':
     main() 

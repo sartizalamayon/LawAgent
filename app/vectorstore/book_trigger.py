@@ -193,7 +193,7 @@ class BookTrigger:
                     'book_name': chunk['book_name'],
                     'page_number': chunk['page_number'],
                     'chunk_index': chunk['chunk_index'],
-                    'chunk_text': chunk['chunk_text'],
+                    'page_content': chunk['chunk_text'],
                     'file_path': chunk['file_path'],
                     'ingested_at': datetime.now().isoformat()
                 }

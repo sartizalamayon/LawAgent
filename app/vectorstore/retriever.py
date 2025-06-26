@@ -1,3 +1,6 @@
+# DEPRECATED: Use LangChain-based retriever in app/api/retriever.py
+# This file is no longer used.
+
 import os
 from typing import List, Dict, Optional, Any
 from qdrant_client import QdrantClient
@@ -59,17 +62,20 @@ class BookRetriever:
             # Format results and apply post-search filtering
             results = []
             for result in search_results:
-                # Skip results with missing chunk_text
-                chunk_text = result.payload.get('chunk_text')
+                # Try to get the text from multiple possible fields
+                chunk_text = (
+                    result.payload.get('chunk_text') or
+                    result.payload.get('page_content') or
+                    result.payload.get('text')
+                )
                 if chunk_text is None:
+                    logger.warning(f"No text field found in payload: {result.payload.keys()}")
                     continue
-                    
                 # Apply post-search filtering
                 if book_filter and result.payload.get('book_name') != book_filter:
                     continue
                 if page_filter is not None and result.payload.get('page_number') != page_filter:
                     continue
-                
                 results.append({
                     'id': result.id,
                     'score': result.score,
@@ -80,7 +86,6 @@ class BookRetriever:
                     'file_path': result.payload.get('file_path'),
                     'ingested_at': result.payload.get('ingested_at')
                 })
-                
                 # Stop if we have enough results
                 if len(results) >= top_k:
                     break

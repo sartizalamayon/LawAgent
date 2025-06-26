@@ -5,6 +5,7 @@ from qdrant_client.http import models as qmodels
 from tqdm import tqdm
 import numpy as np
 import uuid
+from qdrant_client.http.models import Filter, FieldCondition, MatchValue
 
 class QdrantClientWrapper:
     def __init__(self, collection_name: str):
@@ -26,6 +27,12 @@ class QdrantClientWrapper:
         for i in tqdm(range(0, len(embeddings), batch_size), desc="Upserting to Qdrant"):
             batch_embeds = np.array(embeddings[i:i+batch_size])
             batch_metas = metadatas[i:i+batch_size]
+            # Ensure both 'chunk_text' and 'page_content' are present in every payload
+            for meta in batch_metas:
+                text = meta.get('chunk_text') or meta.get('page_content')
+                if text:
+                    meta['chunk_text'] = text
+                    meta['page_content'] = text
             self.client.upsert(
                 collection_name=self.collection_name,
                 points=[
@@ -36,4 +43,18 @@ class QdrantClientWrapper:
                     ) for vec, meta in zip(batch_embeds, batch_metas)
                 ],
                 wait=True
-            ) 
+            )
+
+    def delete_by_book_name(self, book_name: str):
+        """Delete all points with the given book_name from the collection."""
+        flt = Filter(must=[FieldCondition(key="book_name", match=MatchValue(value=book_name))])
+        result = self.client.delete(collection_name=self.collection_name, points_selector=flt, wait=True)
+        return result
+
+    def create_payload_index(self, field: str, field_type: str = "keyword"):
+        """Create a payload index for the given field (e.g., 'book_name')."""
+        self.client.create_payload_index(
+            collection_name=self.collection_name,
+            field_name=field,
+            field_schema=qmodels.PayloadSchemaType(field_type)
+        ) 
